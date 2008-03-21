@@ -10,11 +10,9 @@
 	.globl add.v
 	.globl sub.v
 	.globl mag2.v
-
-main:
-	li $v0, 7 # read_double in $f0
-	syscall
-	jr $ra
+	.globl mag.v
+	.globl dot.v
+	.globl cross.v
 
 # Vector addition <f0,f2,f4> + <f6,f8,f10>
 # Output: <f24,f26,f28>
@@ -64,4 +62,10 @@ dot.v:
 	add.d $f30, $f30, $f28
 	mul.d $f28, $f4, $f10 # third component
 	add.d $f30, $f30, $f28
+	jr $ra
+
+# Vector cross product: <f0,f2,f4> x <f6,f8,f10>
+# Output: <f24, f26, f28>
+cross.v:
+	# TODO
 	jr $ra
