@@ -13,6 +13,8 @@
 	.globl mag.v
 	.globl dot.v
 	.globl cross.v
+	.globl unit.v
+	.globl scalar.v
 
 # Vector addition <f0,f2,f4> + <f6,f8,f10>
 # Output: <f24,f26,f28>
@@ -68,4 +70,39 @@ dot.v:
 # Output: <f24, f26, f28>
 cross.v:
 	# TODO
+	jr $ra
+
+# Unit Vector in direction of: <f0,f2,f4>
+# Uses f30
+# Output: <f24,f26,f28>
+unit.v:
+	#Calculate Magnitude
+	mul.d $f30, $f0, $f0 # first component
+	mul.d $f28, $f2, $f2 # second component
+	add.d $f30, $f30, $f28
+	mul.d $f28, $f4, $f4 # third component
+	add.d $f30, $f30, $f28
+	sqrt.d $f30, $f30
+	mtc1 $zero, $f28
+	cvt.d.w $f28, $f28
+	c.eq.d $f30, $f28
+	bc1f thereisone
+	# No Corresponding Unit Vector, return input
+	mov.d $f24, $f0
+	mov.d $f26, $f2
+	mov.d $f28, $f4
+	jr $ra
+thereisone:
+	# Return Unit Vector
+	div.d $f24, $f0, $f30
+	div.d $f26, $f2, $f30
+	div.d $f28, $f4, $f30
+	jr $ra
+
+# Scalar Multiplication: f30*<f0,f2,f4>
+# Output: <f24,f26,f28>
+scalar.v:
+	mul.d $f24, $f30, $f0 # first component
+	mul.d $f26, $f30, $f2 # second component
+	mul.d $f28, $f30, $f4 # third component
 	jr $ra
