@@ -45,26 +45,6 @@ buffer:
 	.globl bmp.write_header
 	.globl bmp.write_pixel
 
-# Test routine to spit out a 256x256 gradient
-# (The write call on xspim goes to stdout)
-main:
-	li $a1, 256
-	li $a2, 256
-
-	jal bmp.write_header
-	li $s0, 65536
-main.loop:
-	move $a1, $s0
-	move $a2, $s0
-	move $a3, $s0
-	jal bmp.write_pixel
-	
-	addi $s0, $s0, -1
-	bne $s0, $0, main.loop
-
-	li $v0, 10 # exit
-	syscall
-
 # Inputs:
 # $a0 file descriptor
 # $a1 image width
