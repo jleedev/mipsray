@@ -19,6 +19,107 @@ intersect:
 	# and call the appropriate specific method
 	# We need to transform the ray into object space
 
+# Compute the intersections of a plane and a ray
+# Inputs:	$a0 pointer to ray
+#		$a1 pointer to shape
+# Outputs:	first hit distance in $f0
+#		$v0 1 if intersection, 0 if not
+plane.intersect:
+	add $t1, $ra, $zero	# Save return address
+	# Put Ray Source (s) in $f{0,2,4}
+	l.d $f0, 0($a0)
+	l.d $f2, 8($a0)
+	l.d $f4, 16($a0)
+	# Put plane point (p) in $f{6,8,10}
+	l.d $f6, 4($a1)
+	l.d $f8, 12($a1)
+	l.d $f10, 20($a1)
+	jal sub.v	# Calculate v=s-p
+	# Put s-p in $f{6,8,10}
+	mov.d $f6, $f24
+	mov.d $f8, $f26
+	mov.d $f10, $f28
+	# Put plane normal (n) in $f{0,2,4}
+	l.d $f0, 28($a1)
+	l.d $f2, 36($a1)
+	l.d $f4, 44($a1)
+	jal dot.v	# Calculate n.(s-p)
+	mov.d $f18, $f30	# Move result temporarily
+	# Put Ray Direction (d) in $f{6,8,10}
+	l.d $f6, 24($a0)
+	l.d $f8, 32($a0)
+	l.d $f10, 40($a0)
+	jal dot.v	# Calculate n.d
+	mov.d $f0, $f30	# Put n.d in $f0
+	mov.d $f2, $f18	# Put n.(s-p) in $f2
+	jal linear	# Solve (n.d)t + (n.(s-p)) = 0
+	mov.d $f0, $f28	# Put result in $f0
+	# $v0 is already set appropriately by "linear"
+	add $ra, $t1, $zero	# Restore return address
+	jr $ra			# Return
+
+# Gives the reflected ray of a ray that hits a plane
+# Inputs:	$a0 pointer to ray
+#	 	$a1 pointer to shape
+# Outputs:	$v0 memory address of reflected ray
+plane.reflect:
+	add $t2, $ra, $zero	# Save Return Address
+	jal plane.intersect	# Get Distance (t)
+	mov.d $f30, $f0		# Put Distance in f30
+	# Load Ray Direction (d)
+	l.d $f0, 24($a0)
+	l.d $f2, 32($a0)
+	l.d $f4, 40($a0)
+	jal scalar.v	# t*<d>
+	# Save d for Later
+	mov.d $f18, $f0
+	mov.d $f20, $f2
+	mov.d $f22, $f4
+	# Load Ray Source (s)
+	l.d $f0, 0($a0)
+	l.d $f2, 8($a0)
+	l.d $f4, 16($a0)
+	# Put t*<d> in f6-f10
+	mov.d $f6, $f24
+	mov.d $f8, $f26
+	mov.d $f10, $f28
+	jal add.v	# Add to find point of intersection (y)
+	# Save y to memory
+	s.d $f24, 0($gp)
+	s.d $f26, 8($gp)
+	s.d $f28, 16($gp)
+	# Load n to f0-f4
+	l.d $f0, 28($a1)
+	l.d $f2, 36($a1)
+	l.d $f4, 44($a1)
+	# Put d in f6-f10
+	mov.d $f6, $f18
+	mov.d $f8, $f20
+	mov.d $f10, $f22
+	jal dot.v	# n.d
+	# Put constant 2 in $f28
+	la $t0, two
+	l.d $f28, 0($t0)
+	mul.d $f30, $f28, $f30	# 2(n.d)
+	jal scalar.v		# 2(n.d)n
+	# Put d in f0-f4
+	mov.d $f0, $f18
+	mov.d $f2, $f20
+	mov.d $f4, $f22
+	# Put 2(n.d)n in f6-f10
+	mov.d $f6, $f24
+	mov.d $f8, $f26
+	mov.d $f10, $f28
+	jal sub.v		# d-2(n.d)n
+	# Put Result in Memory
+	s.d $f24, 24($gp)
+	s.d $f26, 32($gp)
+	s.d $f28, 40($gp)
+	add $v0, $gp, $zero	# Return memory address
+	addi $gp, $gp, 48	# Adjust gp
+	add $ra, $t2, $zero	# Restore $ra
+	jr $ra			# Return	
+
 # Compute the intersections of a sphere and a ray
 # Inputs:	$a0 pointer to ray
 #	 	$a1 pointer to shape
@@ -169,6 +270,6 @@ sphere.reflect:
 	s.d $f28, 40($gp)
 	add $v0, $gp, $zero	# Return memory address
 	addi $gp, $gp, 48	# Adjust gp
-	add $ra, $t2, $zero	# Restor $ra
+	add $ra, $t2, $zero	# Restore $ra
 	jr $ra			# Return
 	
