@@ -4,6 +4,12 @@ filename:
 
 	.text
 main:
+	# Stack usage: 52 bytes
+	# 0($sp) camera ray (48 bytes)
+	# 48($sp) return address (4 bytes)
+	addi $sp, $sp, -52
+	sw $ra, 48($sp)
+
 	# Open the output file
 	la $a0, filename
 	li $a1, 0x8101 # _O_WRONLY | _O_CREAT | _O_BINARY
@@ -28,12 +34,19 @@ main.loop1:
 
 main.loop2:
 
-	# <<< do stuff here >>>
 	# Compute the ray from the camera to that pixel
 
 	# the ray's position is the camera's position
 	# the ray's direction is as follows
 	# (x-w/2)/w * right + (y-h/2)/h * up + direction
+	# = (x/w-1/2) * right + (y/h-1/2) * up + direction
+	mtc1 $s0, $f30 # width
+	cvt.d.w $f30, $f30
+	mtc1 $s2, $f28 # x
+	div.d $f30, $f30, $f28
+	lui $t0, 0x3fc0 # 0.5
+	mtc1 $t0, $f29
+	mul.d $f30, $f28
 
 	# Trace that ray to get a color
 	# Output that pixel to the output file
@@ -54,8 +67,9 @@ main.loop2:
 	li $v0, 16 # close
 	syscall
 	
-	li $v0, 10 # exit
-	syscall
+	lw $ra, 48($sp)
+	addi $sp, $sp, 52
+	jr $ra
 
 # Inputs:
 # $a0 pointer to a ray
