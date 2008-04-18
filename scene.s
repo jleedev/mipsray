@@ -28,9 +28,9 @@
 # Entities that are not exported
 
 # the type of an object is
-# - 1 = sphere
+# - 0 = sphere
 # - fields position, radius
-# - 2 = plane
+# - 1 = plane
 # - fields normal, distance (like in pov)
 
 # a material is
@@ -39,4 +39,16 @@
 
 	.data
 	.globl objects
-objects:
+	.globl lights
+	.globl ambient
+	.globl diffuse
+	.globl background
+objects:	.word 0		# Pointer to first element of objects list
+lights:		.word 0		# Pointer to first element of lights list
+# These Should Sum to 1
+ambient:	.double .1, .1, .1	# Ambient Coefficient
+diffuse:	.double .9, .9, .9	# Diffuse Coefficient
+background:	.double 0, 0, 0		# Background Color
+	.text
+scene.init:
+	

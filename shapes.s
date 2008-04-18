@@ -1,23 +1,136 @@
 	.data
-zero:
-	.double 0.0
-one:
-	.double 1.0
-two:
-	.double 2.0
+zero:	.double 0.0
+one:	.double 1.0
+two:	.double 2.0
 	.text
 	.globl intersect
-	.globl scalar.v
+	.globl reflect
+	.globl normal
+	.globl nearestHit
+
+# Return the object that is first hit by a ray
+# Given:
+# $a0 pointer to the ray
+# Returns:
+# $v0 1 if there is a hit, 0 if not
+# $v1 memory address of first object hit (if there is one)
+# $f0 The distance to the closest hit
+nearestHit:
+	add $v0, $zero, $zero	# Initialize $v0
+	sw $ra, -4($sp)		# Put $ra on stack
+	sw $s0, -8($sp)		# Put $s0 on stack
+	sw $s1, -12($sp)	# Put $s1 on stack
+	sw $s2, -16($sp)	# Put $s2 on stack
+	# There is a spot (2 words) for temporarily storing the closest hit distance
+	addi $sp, $sp, -24	# Adjust $sp
+	lw $s0, objects($zero)	# load pointer to first object
+	add $s1, $zero, $zero	# Initialize $s1 (for storing pointer to closest object)
+	add $s2, $zero, $zero	# Initialize $s2 (has there been a hit yet?)
+nextObj:
+	beq $s0, $zero, exitObjs	# Loop while current object is not NULL
+	add $a1, $s0, $zero		# Put object pointer into $a1
+	jal intersect			# Calculate Intersection
+	beq $v0, $zero, noHit		# Was there a hit?
+	# Yes, there was a hit (update nearest if necessary)
+	beq $s2, $zero, closeHit	# If there haven't yet been any hits, this is the closest
+	# Otherwise, see if this hit is closer than before
+	l.d $f2, 4($sp)			# Bring closest hit distance to $f2
+	c.lt.d $f2, $f0			# Is old value smaller than current value?
+	bc1t noHit			# If so, then this is not a hit
+	# Otherwise, it was a hit
+closeHit:
+	addi $s2, $zero, 1		# There has been a hit
+	add $s1, $s0, $zero		# Put object address in $s1
+	s.d $f0, 4($sp)			# Put hit distance into spot on stack
+noHit:
+	lw $s0, 0($s0)		# Make $s0 point to the next object in the object list
+	j nextObj			# Loop
+exitObjs:
+	add $v0, $s2, $zero	# Has there been a hit yet?
+	add $v1, $s1, $zero	# Store pointer to closest object
+	l.d $f0, 4($sp)		# Store closest hit distance
+	addi $sp, $sp, 24	# Restore $sp
+	lw $s2, -16($sp)	# Restore $s2
+	lw $s1, -12($sp)	# Restore $s1
+	lw $s0, -8($sp)		# Restore $s0
+	lw $ra, -4($sp)		# Restore $ra
+	jr $ra			# Return
 
 # Main intersection code
 # Given:
 # $a0 pointer to the ray
 # $a1 pointer to the shape
 # Returns the first hit distance in $f0
+#		$v0 1 if intersection, 0 if not
 intersect:
-	# We perform a dispatch on the type of the shape
-	# and call the appropriate specific method
-	# We need to transform the ray into object space
+	sw $ra, -4($sp)		# Put $ra on stack
+	addi $sp, $sp, -4	# Adjust $sp
+	lw $t0, 0($a1)		# Put shape type in $t0
+	add $t1, $zero, $zero	# Initialize $t1 to 0
+	bne $t0, $t1, nextInt1	# Is it a Sphere?
+	jal sphere.intersect	# Call appropriate routine
+	j endInt
+nextInt1:
+	addi $t1, $t1, 1	# Try next shape
+	bne $t0, $t1, nextInt2	# Is it a Plane?
+	jal plane.intersect	# Call appropriate routine
+	j endInt
+nextInt2:
+	add $v0, $zero, $zero	# Invalid Shape
+endInt:
+	addi $sp, $sp, 4	# Restore $sp
+	lw $ra, -4($sp)		# Restore $ra
+	jr $ra			# Return
+
+# Main reflection code
+# Given:
+# Inputs:	$a0 pointer to ray
+#	 	$a1 pointer to shape
+# Outputs:	$v0 memory address of reflected ray
+reflect:
+	sw $ra, -4($sp)		# Put $ra on stack
+	addi $sp, $sp, -4	# Adjust $sp
+	lw $t0, 0($a1)		# Put shape type in $t0
+	add $t1, $zero, $zero	# Initialize $t1 to 0
+	bne $t0, $t1, nextRef1	# Is it a Sphere?
+	jal sphere.reflect	# Call appropriate routine
+	j endRef
+nextRef1:
+	addi $t1, $t1, 1	# Try next shape
+	bne $t0, $t1, nextRef2	# Is it a Plane?
+	jal plane.reflect	# Call appropriate routine
+	j endRef
+nextRef2:
+	add $v0, $zero, $zero	# Invalid Shape
+endRef:
+	addi $sp, $sp, 4	# Restore $sp
+	lw $ra, -4($sp)		# Restore $ra
+	jr $ra			# Return
+
+# Main normal code:
+# Given:
+# $a0 pointer to ray
+# $a1 pointer to shape
+# Returns normal in <$f0, $f2, $f4>
+normal:
+	sw $ra, -4($sp)		# Put $ra on stack
+	addi $sp, $sp, -4	# Adjust $sp
+	lw $t0, 0($a1)		# Put shape type in $t0
+	add $t1, $zero, $zero	# Initialize $t1 to 0
+	bne $t0, $t1, nextNor1	# Is it a Sphere?
+	jal sphere.normal	# Call appropriate routine
+	j endNor
+nextNor1:
+	addi $t1, $t1, 1	# Try next shape
+	bne $t0, $t1, nextNor2	# Is it a Plane?
+	jal plane.normal	# Call appropriate routine
+	j endNor
+nextNor2:
+	# Invalid Shape
+endNor:
+	addi $sp, $sp, 4	# Restore $sp
+	lw $ra, -4($sp)		# Restore $ra
+	jr $ra			# Return
 
 # Compute the intersections of a plane and a ray
 # Inputs:	$a0 pointer to ray
@@ -118,7 +231,19 @@ plane.reflect:
 	add $v0, $gp, $zero	# Return memory address
 	addi $gp, $gp, 48	# Adjust gp
 	add $ra, $t2, $zero	# Restore $ra
-	jr $ra			# Return	
+	jr $ra			# Return
+
+# Compute the normal vector to a point of intersection
+# Given:
+# $a0 pointer to ray
+# $a1 pointer to shape
+# Returns normal in <$f0, $f2, $f4>
+plane.normal:
+	# Load n to f0-f4
+	l.d $f0, 28($a1)
+	l.d $f2, 36($a1)
+	l.d $f4, 44($a1)
+	jr $ra
 
 # Compute the intersections of a sphere and a ray
 # Inputs:	$a0 pointer to ray
@@ -273,3 +398,46 @@ sphere.reflect:
 	add $ra, $t2, $zero	# Restore $ra
 	jr $ra			# Return
 	
+# Finds normal vector to point of intersection
+# Given:
+# $a0 pointer to ray
+# $a1 pointer to sphere
+# Returns normal in <$f0, $f2, $f4>
+sphere.normal:
+	add $t2, $ra, $zero	# Save Return Address
+	jal sphere.intersect	# Get Distance (t)
+	mov.d $f30, $f0		# Put Distance in f30
+	# Load Ray Direction (d)
+	l.d $f0, 24($a0)
+	l.d $f2, 32($a0)
+	l.d $f4, 40($a0)
+	jal scalar.v	# t*<d>
+	# Load Ray Source (s)
+	l.d $f0, 0($a0)
+	l.d $f2, 8($a0)
+	l.d $f4, 16($a0)
+	# Put t*<d> in f6-f10
+	mov.d $f6, $f24
+	mov.d $f8, $f26
+	mov.d $f10, $f28
+	jal add.v	# Add to find point of intersection (y)
+	# Put y in f0-f4
+	mov.d $f0, $f24
+	mov.d $f2, $f26
+	mov.d $f4, $f28
+	# Load Circle Center (c)
+	l.d $f6, 4($a1)
+	l.d $f8, 12($a1)
+	l.d $f10, 20($a1)
+	jal sub.v	# y-c
+	# Put y-c in f0-f4
+	mov.d $f0, $f24
+	mov.d $f2, $f26
+	mov.d $f4, $f28
+	jal unit.v	# Unit normal of intersection (n)
+	# Put n in f0-f4
+	mov.d $f0, $f24
+	mov.d $f2, $f26
+	mov.d $f4, ,$f28
+	add $ra, $t2, $zero	# Restore $ra
+	jr $ra			# Return
