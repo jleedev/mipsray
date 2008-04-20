@@ -14,11 +14,15 @@
 # - right
 # - up
 
-# <objects>
+# <objects> (Allocate 22 Words for each object)
 # linked list. pointer in word 0; data follows
 # - word 0 -> next <objects> node or 0
-# - word 1 -> material
-# - word 2 some code for the type
+# - word 1 -> type
+# - word 2,3 -> ColorR
+# - word 4,5 -> ColorG
+# - word 6,7 -> ColorB
+# - word 8 -> Reflectivity
+# - word 9 -> Shininess
 # - subsequent words type-specific
 
 # <lights>
@@ -27,11 +31,15 @@
 
 # Entities that are not exported
 
+# Rays
+# - words 0,1,2,3,4,5 -> Point from which the ray starts
+# - words 6,7,8,9,10,11 -> Unit Vector in Direction of Ray
+
 # the type of an object is
 # - 0 = sphere
-# - fields position, radius
+# - fields position, radius (8 Words total)
 # - 1 = plane
-# - fields normal, distance (like in pov)
+# - fields point on plane, normal (12 Words total)
 
 # a material is
 # - 3-vector for color

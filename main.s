@@ -115,7 +115,7 @@ cont1:
 	sw $s0, -8($fp)		# Put $s0 on stack
 	sw $s1, -12($fp)	# Put $s1 on stack
 	
-	# Use $s0 to store if an intersection has been found
+	# Use $s0 to store $a1 accross calls
 	add $s0, $a1, $zero	# Store $a1
 	# Use $s1 to store pointer to nearest object
 	add $s1, $zero, $zero	# Initialize Nearest object to "NULL"
@@ -135,9 +135,9 @@ aHit:
 	add $a1, $v1, $zero	# Set nearest object as argument for shadow
 	jal shadow		# Calculate intensity
 	# Load Object Color
-	l.d $f6, ??($s1)
-	l.d $f8, ??($s1)
-	l.d $f10, ??($s1)
+	l.d $f6, 8($s1)
+	l.d $f8, 16($s1)
+	l.d $f10, 24($s1)
 	# Multiply intensity times color
 	mul.d $f0, $f0, $f6
 	mul.d $f2, $f2, $f8
@@ -149,13 +149,12 @@ aHit:
 	# Generate a reflected ray, and call recursively on this ray
 	add $a1, $s1, $zero	# Set argument for reflect
 	jal reflect
-	add $s1, $a0, $zero	# Save $a0
 	add $a0, $v0, $zero	# Make reflected ray an argument
 	addi $a1, $s0, -1	# Decrement $a1
 	jal raytrace		# Call recursively on relfected ray
 	addi $gp, $gp, -48	# Delete Reflected Ray From Memory
 	# Given returned color, add to contribution from shadow/light appropriately
-	l.d $f28, ??($s1)	# Get reflectivity of surface
+	l.d $f28, 32($s1)	# Get reflectivity of surface
 	# Multiply reflectivity times returned value
 	mul.d $f0, $f0, $f28
 	mul.d $f2, $f2, $f28
@@ -166,19 +165,19 @@ aHit:
 	l.d $f10, -32($fp)
 	add.v			# Add point color and reflected color
 	# Move Result to f0-f4
-	mov.d $f24, $f0
-	mov.d $f26, $f2
-	mov.d $f28, $f4
+	mov.d $f0, $f24
+	mov.d $f2, $f26
+	mov.d $f4, $f28
 	# Normalize so that the max value is 1
-	li $t0, 1
-	mtc1 $t0, $f28
-	cvt.d.w $f28, $f28
-	c.lt.d $f0, $f28
-	movf.d $f0, $f28
-	c.lt.d $f2, $f28
-	movf.d $f2, $f28
-	c.lt.d $f4, $f28
-	movf.d $f4, $f28
+	# li $t0, 1
+	# mtc1 $t0, $f28
+	# cvt.d.w $f28, $f28
+	# c.lt.d $f0, $f28
+	# movf.d $f0, $f28
+	# c.lt.d $f2, $f28
+	# movf.d $f2, $f28
+	# c.lt.d $f4, $f28
+	# movf.d $f4, $f28
 endTrace:
 	lw $ra, -4($fp)		# Restore $ra
 	lw $s0, -8($fp)		# Restore $s0
@@ -254,13 +253,13 @@ nextLight:			# Loop through lights
 	mov.d $f4, $f28
 	jal unit.v	# Get normal vector pointing to light, and magnitude in f30
 	s.d $f30, 24($sp)	# Put Distance on Stack
-	# Put a shadow ray on the Heap
+	# Put a shadow ray in memory
 	addi $a0, $gp, 4	# Set pointer to first word after $gp
-	# Put Intersection point on heap
+	# Put Intersection point in memory
 	s.d $f6, 4($gp)
 	s.d $f8, 12($gp)
 	s.d $f10, 20($gp)
-	# Put normal vector on heap
+	# Put normal vector in memory
 	s.d $f24, 28($gp)
 	s.d $f26, 36($gp)
 	s.d $f28, 44($gp)
@@ -287,7 +286,8 @@ isLight:
 	cvt.d.w $f28, $f28
 	c.lt.d $f30, $f28
 	bc1t isShadow
-	# Raise Dot product to appropriate power?
+	# Optional: Raise Dot product to appropriate power?
+	# Shininess in 36($)
 	# Multiply value times light color
 	l.d $f0, 28($s0)
 	l.d $f2, 36($s0)
@@ -306,7 +306,7 @@ isLight:
 	s.d $f26, 8($sp)
 	s.d $f28, 16($sp)
 isShadow:
-	addi $gp, $gp, -52	# Delete Shadow Ray from Heap
+	addi $gp, $gp, -52	# Delete Shadow Ray from Memory
 	lw $s0, 0($s0)		# Set $s0 to Next Light
 	j nextLight		# Loop through lights
 endLight:
@@ -315,15 +315,15 @@ endLight:
 	l.d $f2, 8($sp)
 	l.d $f4, 16($sp)
 	# Normalize Intensity so that the max value is 1
-	li $t0, 1
-	mtc1 $t0, $f28
-	cvt.d.w $f28, $f28
-	c.lt.d $f0, $f28
-	movf.d $f0, $f28
-	c.lt.d $f2, $f28
-	movf.d $f2, $f28
-	c.lt.d $f4, $f28
-	movf.d $f4, $f28	
+	# li $t0, 1
+	# mtc1 $t0, $f28
+	# cvt.d.w $f28, $f28
+	# c.lt.d $f0, $f28
+	# movf.d $f0, $f28
+	# c.lt.d $f2, $f28
+	# movf.d $f2, $f28
+	# c.lt.d $f4, $f28
+	# movf.d $f4, $f28	
 	la $s0, diffuse		# Memory Address of Diffuse Constants
 	# Load Diffuse Constants
 	l.d $f6, 0($s0)
@@ -347,3 +347,23 @@ endLight:
 	lw $s0, -8($sp)		# Restore $s0
 	lw $ra, -4($sp)		# Restore $ra
 	jal $ra			# Return
+
+# Clips the values of a color between zero and 1
+# Given:
+# Color in <$f0, $f2, $f4>
+# Returns value in <$f0, $f2, $f4>
+# Uses $f28
+clip:
+	# Move "1" to $f28
+	li $t0, 1
+	mtc1 $t0, $f28
+	cvt.d.w $f28, $f28
+	# For each component, if it is not less than 1, move 1 to it
+	c.lt.d $f0, $f28
+	movf.d $f0, $f28
+	c.lt.d $f2, $f28
+	movf.d $f2, $f28
+	c.lt.d $f4, $f28
+	movf.d $f4, $f28
+	jr $ra		# Return
+	

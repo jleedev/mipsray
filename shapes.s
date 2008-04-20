@@ -65,7 +65,7 @@ exitObjs:
 intersect:
 	sw $ra, -4($sp)		# Put $ra on stack
 	addi $sp, $sp, -4	# Adjust $sp
-	lw $t0, 0($a1)		# Put shape type in $t0
+	lw $t0, 4($a1)		# Put shape type in $t0
 	add $t1, $zero, $zero	# Initialize $t1 to 0
 	bne $t0, $t1, nextInt1	# Is it a Sphere?
 	jal sphere.intersect	# Call appropriate routine
@@ -90,7 +90,7 @@ endInt:
 reflect:
 	sw $ra, -4($sp)		# Put $ra on stack
 	addi $sp, $sp, -4	# Adjust $sp
-	lw $t0, 0($a1)		# Put shape type in $t0
+	lw $t0, 4($a1)		# Put shape type in $t0
 	add $t1, $zero, $zero	# Initialize $t1 to 0
 	bne $t0, $t1, nextRef1	# Is it a Sphere?
 	jal sphere.reflect	# Call appropriate routine
@@ -115,7 +115,7 @@ endRef:
 normal:
 	sw $ra, -4($sp)		# Put $ra on stack
 	addi $sp, $sp, -4	# Adjust $sp
-	lw $t0, 0($a1)		# Put shape type in $t0
+	lw $t0, 4($a1)		# Put shape type in $t0
 	add $t1, $zero, $zero	# Initialize $t1 to 0
 	bne $t0, $t1, nextNor1	# Is it a Sphere?
 	jal sphere.normal	# Call appropriate routine
@@ -144,18 +144,18 @@ plane.intersect:
 	l.d $f2, 8($a0)
 	l.d $f4, 16($a0)
 	# Put plane point (p) in $f{6,8,10}
-	l.d $f6, 4($a1)
-	l.d $f8, 12($a1)
-	l.d $f10, 20($a1)
+	l.d $f6, 40($a1)
+	l.d $f8, 48($a1)
+	l.d $f10, 56($a1)
 	jal sub.v	# Calculate v=s-p
 	# Put s-p in $f{6,8,10}
 	mov.d $f6, $f24
 	mov.d $f8, $f26
 	mov.d $f10, $f28
 	# Put plane normal (n) in $f{0,2,4}
-	l.d $f0, 28($a1)
-	l.d $f2, 36($a1)
-	l.d $f4, 44($a1)
+	l.d $f0, 64($a1)
+	l.d $f2, 72($a1)
+	l.d $f4, 80($a1)
 	jal dot.v	# Calculate n.(s-p)
 	mov.d $f18, $f30	# Move result temporarily
 	# Put Ray Direction (d) in $f{6,8,10}
@@ -202,9 +202,9 @@ plane.reflect:
 	s.d $f26, 8($gp)
 	s.d $f28, 16($gp)
 	# Load n to f0-f4
-	l.d $f0, 28($a1)
-	l.d $f2, 36($a1)
-	l.d $f4, 44($a1)
+	l.d $f0, 64($a1)
+	l.d $f2, 72($a1)
+	l.d $f4, 80($a1)
 	# Put d in f6-f10
 	mov.d $f6, $f18
 	mov.d $f8, $f20
@@ -240,9 +240,9 @@ plane.reflect:
 # Returns normal in <$f0, $f2, $f4>
 plane.normal:
 	# Load n to f0-f4
-	l.d $f0, 28($a1)
-	l.d $f2, 36($a1)
-	l.d $f4, 44($a1)
+	l.d $f0, 64($a1)
+	l.d $f2, 72($a1)
+	l.d $f4, 80($a1)
 	jr $ra
 
 # Compute the intersections of a sphere and a ray
@@ -257,9 +257,9 @@ sphere.intersect:
 	l.d $f2, 8($a0)
 	l.d $f4, 16($a0)
 	# Put sphere center (c) in $f{6,8,10}
-	l.d $f6, 4($a1)
-	l.d $f8, 12($a1)
-	l.d $f10, 20($a1)
+	l.d $f6, 40($a1)
+	l.d $f8, 48($a1)
+	l.d $f10, 56($a1)
 	jal sub.v	# Calculate v=s-c
 	# Put v in $f{0,2,4}
 	mov.d $f0, $f24
@@ -275,7 +275,7 @@ sphere.intersect:
 	l.d $f28, 0($t0)
 	mul.d $f20, $f28, $f30	# Calculate 2(v.d), in $f20
 	jal mag2.v	# Calculate ||v||^2
-	l.d $f28, 28($a1)	# Radius (r)
+	l.d $f28, 64($a1)	# Radius (r)
 	mul.d $f28, $f28, $f28	# r^2
 	sub.d $f4, $f30, $f28	# Put ||v||^2-r^2 in $f4
 	mov.d $f2, $f20		# Put 2(v.d) in $f2
@@ -357,9 +357,9 @@ sphere.reflect:
 	mov.d $f2, $f26
 	mov.d $f4, $f28
 	# Load Circle Center (c)
-	l.d $f6, 4($a1)
-	l.d $f8, 12($a1)
-	l.d $f10, 20($a1)
+	l.d $f6, 40($a1)
+	l.d $f8, 48($a1)
+	l.d $f10, 56($a1)
 	jal sub.v	# y-c
 	# Put y-c in f0-f4
 	mov.d $f0, $f24
@@ -426,9 +426,9 @@ sphere.normal:
 	mov.d $f2, $f26
 	mov.d $f4, $f28
 	# Load Circle Center (c)
-	l.d $f6, 4($a1)
-	l.d $f8, 12($a1)
-	l.d $f10, 20($a1)
+	l.d $f6, 40($a1)
+	l.d $f8, 48($a1)
+	l.d $f10, 56($a1)
 	jal sub.v	# y-c
 	# Put y-c in f0-f4
 	mov.d $f0, $f24
