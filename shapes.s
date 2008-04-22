@@ -86,6 +86,7 @@ endInt:
 # Given:
 # Inputs:	$a0 pointer to ray
 #	 	$a1 pointer to shape
+#		$a2 place to put reflected ray in memory
 # Outputs:	$v0 memory address of reflected ray
 reflect:
 	sw $ra, -4($sp)		# Put $ra on stack
@@ -174,7 +175,8 @@ plane.intersect:
 # Gives the reflected ray of a ray that hits a plane
 # Inputs:	$a0 pointer to ray
 #	 	$a1 pointer to shape
-# Outputs:	$v0 memory address of reflected ray
+#		$a2 Memory Address of reflected ray
+# Outputs:	Reflected ray in $a2 (Address also in $v0)
 plane.reflect:
 	add $t2, $ra, $zero	# Save Return Address
 	jal plane.intersect	# Get Distance (t)
@@ -198,9 +200,9 @@ plane.reflect:
 	mov.d $f10, $f28
 	jal add.v	# Add to find point of intersection (y)
 	# Save y to memory
-	s.d $f24, 0($gp)
-	s.d $f26, 8($gp)
-	s.d $f28, 16($gp)
+	s.d $f24, 0($a2)
+	s.d $f26, 8($a2)
+	s.d $f28, 16($a2)
 	# Load n to f0-f4
 	l.d $f0, 64($a1)
 	l.d $f2, 72($a1)
@@ -225,11 +227,10 @@ plane.reflect:
 	mov.d $f10, $f28
 	jal sub.v		# d-2(n.d)n
 	# Put Result in Memory
-	s.d $f24, 24($gp)
-	s.d $f26, 32($gp)
-	s.d $f28, 40($gp)
-	add $v0, $gp, $zero	# Return memory address
-	addi $gp, $gp, 48	# Adjust gp
+	s.d $f24, 24($a2)
+	s.d $f26, 32($a2)
+	s.d $f28, 40($a2)
+	add $v0, $a2, $zero	# Return memory address
 	add $ra, $t2, $zero	# Restore $ra
 	jr $ra			# Return
 
@@ -325,6 +326,7 @@ ret1:
 # Gives the reflected ray of a ray that hits a sphere
 # Inputs:	$a0 pointer to ray
 #	 	$a1 pointer to shape
+#		$a2 Memory address of relfected ray
 # Outputs:	$v0 memory address of reflected ray
 sphere.reflect:
 	add $t2, $ra, $zero	# Save Return Address
@@ -349,9 +351,9 @@ sphere.reflect:
 	mov.d $f10, $f28
 	jal add.v	# Add to find point of intersection (y)
 	# Save y to memory
-	s.d $f24, 0($gp)
-	s.d $f26, 8($gp)
-	s.d $f28, 16($gp)
+	s.d $f24, 0($a2)
+	s.d $f26, 8($a2)
+	s.d $f28, 16($a2)
 	# Put y in f0-f4
 	mov.d $f0, $f24
 	mov.d $f2, $f26
@@ -390,11 +392,10 @@ sphere.reflect:
 	mov.d $f4, $f22
 	jal sub.v	# d-2(n.d)<n>
 	# Put Result in Memory
-	s.d $f24, 24($gp)
-	s.d $f26, 32($gp)
-	s.d $f28, 40($gp)
-	add $v0, $gp, $zero	# Return memory address
-	addi $gp, $gp, 48	# Adjust gp
+	s.d $f24, 24($a2)
+	s.d $f26, 32($a2)
+	s.d $f28, 40($a2)
+	add $v0, $a2, $zero	# Return memory address
 	add $ra, $t2, $zero	# Restore $ra
 	jr $ra			# Return
 	
