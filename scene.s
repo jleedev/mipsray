@@ -59,10 +59,10 @@
 	.data
 	.globl camera
 # The Camera/Frame
-camera:	.double 0.0,-2.0,2.5	# Camera
-	.double -2.5,0.0,0.0	# Corner
-	.double 5.0,0.0,0.0	# Right
-	.double 0.0,0.0,5.0	# Up
+camera:	.double 0.0,-5.0,5.0	# Camera
+	.double -5.0,0.0,0.0	# Corner
+	.double 10.0,0.0,0.0	# Right
+	.double 0.0,0.0,10.0	# Up
 
 	.globl objects
 	.globl lights
@@ -74,32 +74,37 @@ lights:		.word 0		# Pointer to first element of lights list
 # These Should Sum to 1
 ambient:	.double 0.1, 0.1, 0.1	# Ambient Coefficient
 diffuse:	.double 0.9, 0.9, 0.9	# Diffuse Coefficient
-background:	.double 0.0, 0.0, 0.0		# Background Color
+background:	.double 0.5, 0.5, 0.5		# Background Color
 
 # Object Variables
 plane1:		.word 0,1	# Pointer, Type
-		.double 0.0,0.0,1.0	# Color
+		.double 0.0,1.0,0.0	# Color
+		.double 0.2		# Reflectivity
+		.double 0.0,5.0,0.0	# Point
+		.double 0.0,0.0,1.0	# Normal
+plane2:		.word 0,1	# Pointer, Type
+		.double 0.0,1.0,0.0	# Color
 		.double 0.2		# Reflectivity
 		.double 0.0,0.0,0.0	# Point
 		.double 0.0,0.0,1.0	# Normal
 sphere1:	.word 0,0	# Pointer, Type
-		.double 1.0,0.0,0.0	# Color
+		.double 0.0,0.0,1.0	# Color
 		.double 0.2		# Reflectivity
-		.double 0.0,5.0,2.0	# Center
-		.double 1.0,0.0,0.0	# Radius
+		.double 0.0,5.0,3.0	# Center
+		.double 2.0,0.0,0.0	# Radius
 
 light1:		.word 0
-		.double 1.0,5.0,7.0	# Position
+		.double 10.0,5.0,7.0	# Position
 		.double 1.0,1.0,1.0	# Color
 	.text
 	.globl scene.init
 scene.init:
 	# Initialize objects linked list
 	la $t0, objects
-	la $t1, plane1
-	sw $t1, 0($t0)	# Make "objects" point to "plane1"
-	la $t0, sphere1
-	sw $t0, 0($t1)	# Make "plane1" point to "sphere1"
+	la $t1, sphere1
+	sw $t1, 0($t0)	# Make "objects" point to "sphere1"
+	la $t0, plane2
+	#sw $t0, 0($t1)	# Make "shere1" point to "plane1"
 
 	# Initialize lights linked list
 	la $t0, lights

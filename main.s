@@ -1,8 +1,8 @@
 	.data
 filename:
-	.asciiz "output.bmp"
+	.asciiz "output6.bmp"
 half:	.double 0.5
-tiny:	.double 0.0001
+tiny:	.double 0.000001
 
 	.text
 	.globl main
@@ -83,13 +83,13 @@ main.loop2:
 	jal unit.v	# Compute Magnitude/Unit Vector
 	la $t1, half
 	l.d $f12, 0($t1)	# Move constant .5 to $f12
-	mtc1 $s2, $f28		# Move x to $f28 and make it a double
-	cvt.d.w $f28, $f28
-	add.d $f28, $f28, $f12	# Add .5 to x
-	mul.d $f30, $f30, $f28	# Multiply |right|*(x+.5)
-	mtc1 $s0, $f28		# Move number of pixels to $f28, make it a double
-	cvt.d.w $f28, $f28
-	div.d $f30, $f30, $f28	# Divide $f30 by number of pixels
+	mtc1 $s2, $f14		# Move x to $f14 and make it a double
+	cvt.d.w $f14, $f14
+	add.d $f14, $f14, $f12	# Add .5 to x
+	mul.d $f30, $f30, $f14	# Multiply |right|*(x+.5)
+	mtc1 $s0, $f14		# Move number of pixels to $f14, make it a double
+	cvt.d.w $f14, $f14
+	div.d $f30, $f30, $f14	# Divide $f30 by number of pixels
 	# Multiply Unit Vector by Scalar
 	mul.d $f6, $f24, $f30
 	mul.d $f8, $f26, $f30
@@ -100,13 +100,13 @@ main.loop2:
 	l.d $f2, 80($t0)
 	l.d $f4, 88($t0)
 	jal unit.v		# Compute Unit Vector/Magnitude
-	mtc1 $s3, $f28		# Move y to $f28
-	cvt.d.w $f28, $f28	# Make y a double
-	add.d $f28, $f28, $f12	# Add .5 to y
-	mul.d $f30, $f30, $f28	# Multiply |up|*(y+.5)
-	mtc1 $s1, $f28		# Move number of pixels to $f28
-	cvt.d.w $f28, $f28	# Make it a double
-	div.d $f30, $f30, $f28	# Divide by number of pixels
+	mtc1 $s3, $f14		# Move y to $f14
+	cvt.d.w $f14, $f14	# Make y a double
+	add.d $f14, $f14, $f12	# Add .5 to y
+	mul.d $f30, $f30, $f14	# Multiply |up|*(y+.5)
+	mtc1 $s1, $f14		# Move number of pixels to $f14
+	cvt.d.w $f14, $f14	# Make it a double
+	div.d $f30, $f30, $f14	# Divide by number of pixels
 	# Multiply Unit Vector by Scalar
 	mul.d $f0, $f24, $f30
 	mul.d $f2, $f26, $f30
@@ -192,6 +192,10 @@ main.loop2:
 # <f0, f2, f4> 3-vector for the color
 raytrace:
 	bgt $a1, $zero, cont1
+	mtc1 $zero, $f0
+	cvt.d.w $f0, $f0
+	mov.d $f2, $f0
+	mov.d $f4, $f0
 	jr $ra			# Return if recursion levels left is <= 0
 cont1:
 	# Allocate Space on the Stack
@@ -224,6 +228,13 @@ cont1:
 aHit:
 	add $s1, $v1, $zero	# Store nearest object's address
 	add $a1, $v1, $zero	# Set nearest object as argument for shadow
+	
+	#TESTING ONLY: (Just load color of object hit)
+	#l.d $f0, 8($s1)
+	#l.d $f2, 16($s1)
+	#l.d $f4, 24($s1)
+	#j endTrace
+	
 	jal shadow		# Calculate intensity
 	# Load Object Color
 	l.d $f6, 8($s1)
@@ -439,7 +450,7 @@ endLight:
 	mul.d $f0, $f0, $f6
 	mul.d $f2, $f2, $f8
 	mul.d $f4, $f4, $f10
-	la $s0, ambient		# Memory Address of Diffuse Constants
+	la $s0, ambient		# Memory Address of Ambient Constants
 	# Load Ambient Constants
 	l.d $f6, 0($s0)
 	l.d $f8, 8($s0)
