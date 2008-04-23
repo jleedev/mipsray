@@ -14,7 +14,7 @@ epsilon:
 linear:
 	li $v0, 0
 	mtc1 $v0, $f28
-	mtc1 $v0, $f29
+	cvt.d.w $f28, $f28
 	c.eq.d $f0, $f28
 	bc1t linear.none
 	# Okey-dokey, we've got a root
@@ -35,7 +35,7 @@ quadratic:
 	# First see if this is just a linear
 	li $v0, 0
 	mtc1 $v0, $f28
-	mtc1 $v0, $f29
+	cvt.d.w $f28, $f28
 	c.eq.d $f0, $f28 # If so,
 	bc1f quadratic.really
 	mov.d $f0, $f2 # then shift the coefficients

@@ -59,10 +59,10 @@
 	.data
 	.globl camera
 # The Camera/Frame
-camera:	.double 0.0,0.0,0.0	# Camera
-	.double 0.0,0.0,0.0	# Corner
-	.double 1.0,0.0,0.0	# Right
-	.double 0.0,1.0,0.0	# Up
+camera:	.double 0.0,-2.0,2.5	# Camera
+	.double -2.5,0.0,0.0	# Corner
+	.double 5.0,0.0,0.0	# Right
+	.double 0.0,0.0,5.0	# Up
 
 	.globl objects
 	.globl lights
@@ -78,13 +78,21 @@ background:	.double 0.0, 0.0, 0.0		# Background Color
 
 # Object Variables
 plane1:		.word 0,1	# Pointer, Type
-		.double 0.5,0.5,0.5,0.2,0.0,0.0,0.0,1.0,0.0,0.0
+		.double 0.0,0.0,1.0	# Color
+		.double 0.2		# Reflectivity
+		.double 0.0,0.0,0.0	# Point
+		.double 0.0,0.0,1.0	# Normal
 sphere1:	.word 0,0	# Pointer, Type
-		.double 0.5,0.5,0.5,0.2,0.0,0.0,0.0,1.0
+		.double 1.0,0.0,0.0	# Color
+		.double 0.2		# Reflectivity
+		.double 0.0,5.0,2.0	# Center
+		.double 1.0,0.0,0.0	# Radius
 
 light1:		.word 0
-		.double 0.0,0.0,10.0,1.0,1.0,1.0
+		.double 1.0,5.0,7.0	# Position
+		.double 1.0,1.0,1.0	# Color
 	.text
+	.globl scene.init
 scene.init:
 	# Initialize objects linked list
 	la $t0, objects
@@ -97,3 +105,4 @@ scene.init:
 	la $t0, lights
 	la $t1, light1
 	sw $t1, 0($t0)	# Make "lights" point to "light1"
+	jr $ra

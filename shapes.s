@@ -41,7 +41,7 @@ nextObj:
 closeHit:
 	addi $s2, $zero, 1		# There has been a hit
 	add $s1, $s0, $zero		# Put object address in $s1
-	s.d $f0, 4($sp)			# Put hit distance into spot on stack
+	s.d $f0, 0($sp)			# Put hit distance into spot on stack
 noHit:
 	lw $s0, 0($s0)		# Make $s0 point to the next object in the object list
 	j nextObj			# Loop

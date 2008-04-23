@@ -2,8 +2,10 @@
 filename:
 	.asciiz "output.bmp"
 half:	.double 0.5
+tiny:	.double 0.0001
 
 	.text
+	.globl main
 main:
 	# Stack usage: 52 bytes
 	# 0($sp) camera ray (48 bytes)
@@ -23,12 +25,14 @@ main:
 
 	# Write the bitmap header
 	move $a0, $s4
-	li $a1, 10 # width
-	li $a2, 10 # height
+	li $a1, 100 # width
+	li $a2, 100 # height
 	move $s0, $a1 # save the width
 	move $s1, $a2 # and height
 
 	jal bmp.write_header
+	
+	jal scene.init	# Initialize the Scene
 
 	# The camera ray's position never changes, so load it here.
 	la $t0, camera
@@ -39,7 +43,7 @@ main:
 	l.d $f0, 16($t0)
 	s.d $f0, 16($sp)
 
-	# For each pixel in the image:
+	# For each pixel in the image
 	li $s3, 0 # y coord of current pixel
 main.loop1:
 	li $s2, 0 # x coord of current pixel
@@ -230,9 +234,9 @@ aHit:
 	mul.d $f2, $f2, $f8
 	mul.d $f4, $f4, $f10
 	# Store point color to stack
-	s.d $f0, -16($fp)
-	s.d $f2, -24($fp)
-	s.d $f4, -32($fp)
+	s.d $f0, -20($fp)
+	s.d $f2, -28($fp)
+	s.d $f4, -36($fp)
 	# Generate a reflected ray, and call recursively on this ray
 	add $a1, $s1, $zero	# Set argument for reflect
 	addi $a2, $sp, 4	# Set argument for reflect
@@ -248,9 +252,9 @@ aHit:
 	mul.d $f2, $f2, $f28
 	mul.d $f4, $f4, $f28
 	# Get point color
-	l.d $f6, -16($fp)
-	l.d $f8, -24($fp)
-	l.d $f10, -32($fp)
+	l.d $f6, -20($fp)
+	l.d $f8, -28($fp)
+	l.d $f10, -36($fp)
 	jal add.v		# Add point color and reflected color
 	# Move Result to f0-f4
 	mov.d $f0, $f24
@@ -317,7 +321,8 @@ shadow:
 	s.d $f26, 40($sp)
 	s.d $f28, 48($sp)
 	
-	lw $s0, lights($zero)	# Set $s0 to point to first light source
+	la $t0, lights
+	lw $s0, 0($t0)	# Set $s0 to point to first light source
 	# Initialize Intensity, put on stack
 	mtc1 $zero, $f0
 	cvt.d.w $f0, $f0
@@ -340,10 +345,22 @@ nextLight:			# Loop through lights
 	mov.d $f0, $f24
 	mov.d $f2, $f26
 	mov.d $f4, $f28
-	jal unit.v	# Get normal vector pointing to light, and magnitude in f30
+	jal unit.v	# Get unit vector pointing to light, and magnitude in f30
 	s.d $f30, 24($sp)	# Put Distance on Stack
 	# Put a shadow ray in memory
-	addi $a0, $sp, 80	# Set pointer to appropraite word in stack
+	addi $a0, $sp, 80	# Set pointer to appropraite word in stack	
+	
+	# Make the start of the shadow ray start away from the shape
+	# (So it doesn't find an intersection with an object at distance 0)
+	la $t0, tiny
+	l.d $f12, 0($t0)
+	mul.d $f14, $f12, $f24
+	add.d $f6, $f6, $f14
+	mul.d $f14, $f12, $f26
+	add.d $f8, $f8, $f14
+	mul.d $f14, $f12, $f28
+	add.d $f10, $f10, $f14
+	
 	# Put Intersection point in memory
 	s.d $f6, 80($sp)
 	s.d $f8, 88($sp)
@@ -431,11 +448,11 @@ endLight:
 	add.d $f0, $f0, $f6
 	add.d $f2, $f2, $f8
 	add.d $f4, $f4, $f10
-	addi $sp, $sp, 92	# Restore $sp
+	addi $sp, $sp, 140	# Restore $sp
 	lw $a0, -12($sp)	# Restore $a0
 	lw $s0, -8($sp)		# Restore $s0
 	lw $ra, -4($sp)		# Restore $ra
-	jal $ra			# Return
+	jr $ra			# Return
 
 # Clips the values of a color between zero and 1
 # Given:
