@@ -168,7 +168,14 @@ plane.intersect:
 	mov.d $f2, $f18	# Put n.(s-p) in $f2
 	jal linear	# Solve (n.d)t + (n.(s-p)) = 0
 	mov.d $f0, $f28	# Put result in $f0
-	# $v0 is already set appropriately by "linear"
+	# $v0 is already set appropriately by "linear" if n.d = 0
+	# If $f0 is negative, it is not a hit
+	mtc1 $zero, $f30
+	cvt.d.w $f30, $f30
+	c.lt.d $f0, $f30
+	bc1f donePI
+	add $v0, $zero, $zero	# If $f0 < 0, no intersection
+donePI:
 	add $ra, $t1, $zero	# Restore return address
 	jr $ra			# Return
 
