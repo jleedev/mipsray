@@ -2,6 +2,7 @@
 zero:	.double 0.0
 one:	.double 1.0
 two:	.double 2.0
+tiny:	.double 0.00000001
 	.text
 	.globl intersect
 	.globl reflect
@@ -34,7 +35,7 @@ nextObj:
 	# Yes, there was a hit (update nearest if necessary)
 	beq $s2, $zero, closeHit	# If there haven't yet been any hits, this is the closest
 	# Otherwise, see if this hit is closer than before
-	l.d $f2, 4($sp)			# Bring closest hit distance to $f2
+	l.d $f2, 0($sp)			# Bring closest hit distance to $f2
 	c.lt.d $f2, $f0			# Is old value smaller than current value?
 	bc1t noHit			# If so, then this is not a hit
 	# Otherwise, it was a hit
@@ -48,7 +49,7 @@ noHit:
 exitObjs:
 	add $v0, $s2, $zero	# Has there been a hit yet?
 	add $v1, $s1, $zero	# Store pointer to closest object
-	l.d $f0, 4($sp)		# Store closest hit distance
+	l.d $f0, 0($sp)		# Store closest hit distance
 	addi $sp, $sp, 24	# Restore $sp
 	lw $s2, -16($sp)	# Restore $s2
 	lw $s1, -12($sp)	# Restore $s1
@@ -237,6 +238,23 @@ plane.reflect:
 	s.d $f24, 24($a2)
 	s.d $f26, 32($a2)
 	s.d $f28, 40($a2)
+
+	# Fix starting point
+	la $t0, tiny
+	l.d $f0, 0($t0)		# Get a tiny number
+	l.d $f2, 0($a2)		# First Component
+	mul.d $f24, $f24, $f0	# Tiny*DiretionX
+	add.d $f2, $f2, $f24	# Add To X component
+	s.d $f2, 0($a2)		# Store Back
+	l.d $f2, 8($a2)		# Second Component
+	mul.d $f26, $f26, $f0	# Tiny*DiretionY
+	add.d $f2, $f2, $f26	# Add To X component
+	s.d $f2, 8($a2)		# Store Back
+	l.d $f2, 16($a2)		# First Component
+	mul.d $f28, $f28, $f0	# Tiny*DiretionX
+	add.d $f2, $f2, $f28	# Add To X component
+	s.d $f2, 16($a2)		# Store Back
+	
 	add $v0, $a2, $zero	# Return memory address
 	add $ra, $t2, $zero	# Restore $ra
 	jr $ra			# Return
@@ -402,6 +420,23 @@ sphere.reflect:
 	s.d $f24, 24($a2)
 	s.d $f26, 32($a2)
 	s.d $f28, 40($a2)
+
+	# Fix starting point
+	la $t0, tiny
+	l.d $f0, 0($t0)		# Get a tiny number
+	l.d $f2, 0($a2)		# First Component
+	mul.d $f24, $f24, $f0	# Tiny*DiretionX
+	add.d $f2, $f2, $f24	# Add To X component
+	s.d $f2, 0($a2)		# Store Back
+	l.d $f2, 8($a2)		# Second Component
+	mul.d $f26, $f26, $f0	# Tiny*DiretionY
+	add.d $f2, $f2, $f26	# Add To X component
+	s.d $f2, 8($a2)		# Store Back
+	l.d $f2, 16($a2)		# First Component
+	mul.d $f28, $f28, $f0	# Tiny*DiretionX
+	add.d $f2, $f2, $f28	# Add To X component
+	s.d $f2, 16($a2)		# Store Back
+	
 	add $v0, $a2, $zero	# Return memory address
 	add $ra, $t2, $zero	# Restore $ra
 	jr $ra			# Return

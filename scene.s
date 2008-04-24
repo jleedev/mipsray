@@ -72,29 +72,31 @@ camera:	.double 0.0,-5.0,5.0	# Camera
 objects:	.word 0		# Pointer to first element of objects list
 lights:		.word 0		# Pointer to first element of lights list
 # These Should Sum to 1
-ambient:	.double 0.1, 0.1, 0.1	# Ambient Coefficient
-diffuse:	.double 0.9, 0.9, 0.9	# Diffuse Coefficient
-background:	.double 0.5, 0.5, 0.5		# Background Color
+ambient:	.double 0.2, 0.2, 0.2	# Ambient Coefficient
+diffuse:	.double 0.8, 0.8, 0.8	# Diffuse Coefficient
+background:	.double 0.0, 0.0, 0.0		# Background Color
 
 # Object Variables
-plane1:		.word 0,1	# Pointer, Type
-		.double 0.0,1.0,0.0	# Color
-		.double 0.2		# Reflectivity
-		.double 0.0,5.0,0.0	# Point
-		.double 0.0,0.0,1.0	# Normal
+sphere2:	.word 0,0	# Pointer, Type
+		.double 0.5,0.0,0.5	# Color
+		.double 0.4		# Reflectivity
+		.double -4.0,7.0,4.0	# Center
+		.double 4.0,0.0,0.0	# Radius
 plane2:		.word 0,1	# Pointer, Type
-		.double 0.0,1.0,0.0	# Color
+		.double 0.3,0.3,0.3	# Color
 		.double 0.2		# Reflectivity
 		.double 0.0,0.0,0.0	# Point
 		.double 0.0,0.0,1.0	# Normal
 sphere1:	.word 0,0	# Pointer, Type
-		.double 0.0,0.0,1.0	# Color
-		.double 0.2		# Reflectivity
-		.double 0.0,5.0,3.0	# Center
-		.double 2.0,0.0,0.0	# Radius
-
-light1:		.word 0
-		.double 10.0,5.0,7.0	# Position
+		.double 0.0,1.0,1.0	# Color
+		.double 0.6		# Reflectivity
+		.double 4.0,13.0,10.0	# Center
+		.double 5.5,0.0,0.0	# Radius
+light1:		.word 0,0
+		.double 10.0,10.0,15.0	# Position
+		.double 1.0,1.0,1.0	# Color
+light2:		.word 0,0
+		.double -10.0,5.0,15.0	# Position
 		.double 1.0,1.0,1.0	# Color
 	.text
 	.globl scene.init
@@ -103,11 +105,15 @@ scene.init:
 	la $t0, objects
 	la $t1, sphere1
 	sw $t1, 0($t0)	# Make "objects" point to "sphere1"
-	la $t0, plane2
-	#sw $t0, 0($t1)	# Make "shere1" point to "plane1"
+	la $t0, sphere2
+	sw $t0, 0($t1)	# Make "shere1" point to "plane2"
+	la $t1, plane2
+	sw $t1, 0($t0)	# Make plane2 point to sphere2
 
 	# Initialize lights linked list
 	la $t0, lights
 	la $t1, light1
 	sw $t1, 0($t0)	# Make "lights" point to "light1"
+	la $t0, light2
+	sw $t0, 0($t1)	# Make "light1" point to "light2"
 	jr $ra

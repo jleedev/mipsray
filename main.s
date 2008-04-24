@@ -1,8 +1,8 @@
 	.data
 filename:
-	.asciiz "output6.bmp"
+	.asciiz "output36.bmp"
 half:	.double 0.5
-tiny:	.double 0.000001
+tiny:	.double 0.00000001
 
 	.text
 	.globl main
@@ -25,8 +25,8 @@ main:
 
 	# Write the bitmap header
 	move $a0, $s4
-	li $a1, 100 # width
-	li $a2, 100 # height
+	li $a1, 400 # width
+	li $a2, 400 # height
 	move $s0, $a1 # save the width
 	move $s1, $a2 # and height
 
@@ -145,7 +145,7 @@ main.loop2:
 
 	# Trace that ray to get a color
 	add $a0, $sp, $zero	# Set argument to point to ray on stack
-	addi $a1, $zero, 1	# Number of Recursive Levels
+	addi $a1, $zero, 5	# Number of Recursive Levels
 	jal raytrace		# Call raytrace on ray in stack
 	jal clip		# Normalize Output of raytrace
 	li $t0, 0xff
@@ -203,8 +203,8 @@ cont1:
 	# $fp := previous $fp, $sp := previous $sp (2 extra words on stack)
 	sw $fp, -4($sp)
 	addi $fp, $sp, -4
-	sw $sp, -80($fp)
-	addi $sp, $fp, -80
+	sw $sp, -88($fp)
+	addi $sp, $fp, -88
 	
 	sw $ra, -4($fp)		# Put $ra on stack
 	sw $s0, -8($fp)		# Put $s0 on stack
@@ -229,7 +229,7 @@ aHit:
 	add $s1, $v1, $zero	# Store nearest object's address
 	add $a1, $v1, $zero	# Set nearest object as argument for shadow
 	
-	#TESTING ONLY: (Just load color of object hit)
+	# TESTING ONLY: (Just load color of object hit)
 	#l.d $f0, 8($s1)
 	#l.d $f2, 16($s1)
 	#l.d $f4, 24($s1)
@@ -252,7 +252,7 @@ aHit:
 	add $a1, $s1, $zero	# Set argument for reflect
 	addi $a2, $sp, 4	# Set argument for reflect
 	jal reflect
-	add $a0, $v0, $zero	# Make reflected ray an argument
+	add $a0, $sp, 4		# Make reflected ray an argument
 	addi $a1, $s0, -1	# Decrement $a1
 	jal raytrace		# Call recursively on relfected ray
 	# NO! addi $gp, $gp, -48	# Delete Reflected Ray From Memory
@@ -271,16 +271,6 @@ aHit:
 	mov.d $f0, $f24
 	mov.d $f2, $f26
 	mov.d $f4, $f28
-	# Normalize so that the max value is 1
-	# li $t0, 1
-	# mtc1 $t0, $f28
-	# cvt.d.w $f28, $f28
-	# c.lt.d $f0, $f28
-	# movf.d $f0, $f28
-	# c.lt.d $f2, $f28
-	# movf.d $f2, $f28
-	# c.lt.d $f4, $f28
-	# movf.d $f4, $f28
 endTrace:
 	lw $ra, -4($fp)		# Restore $ra
 	lw $s0, -8($fp)		# Restore $s0
@@ -344,9 +334,9 @@ nextLight:			# Loop through lights
 	beq $s0, $zero, endLight	# Break loop when light pointer is NULL
 	# Calculate Distance to Light Source (Put on Stack)
 	# Load Light Source Position
-	l.d $f0, 4($s0)
-	l.d $f2, 12($s0)
-	l.d $f4, 20($s0)
+	l.d $f0, 8($s0)
+	l.d $f2, 16($s0)
+	l.d $f4, 24($s0)
 	# Load Intersection Point
 	l.d $f6, 32($sp)
 	l.d $f8, 40($sp)
@@ -403,12 +393,13 @@ isLight:
 	cvt.d.w $f28, $f28
 	c.lt.d $f30, $f28
 	bc1t isShadow
+	
 	# Optional: Raise Dot product to appropriate power?
-	# Shininess in 36($)
+	
 	# Multiply value times light color
-	l.d $f0, 28($s0)
-	l.d $f2, 36($s0)
-	l.d $f4, 44($s0)
+	l.d $f0, 32($s0)
+	l.d $f2, 40($s0)
+	l.d $f4, 48($s0)
 	# Multiply Vector times value in $f30
 	mul.d $f0, $f0, $f30
 	mul.d $f2, $f2, $f30
@@ -430,17 +421,7 @@ endLight:
 	# Load Diffuse Intensity
 	l.d $f0, 0($sp)
 	l.d $f2, 8($sp)
-	l.d $f4, 16($sp)
-	# Normalize Intensity so that the max value is 1
-	# li $t0, 1
-	# mtc1 $t0, $f28
-	# cvt.d.w $f28, $f28
-	# c.lt.d $f0, $f28
-	# movf.d $f0, $f28
-	# c.lt.d $f2, $f28
-	# movf.d $f2, $f28
-	# c.lt.d $f4, $f28
-	# movf.d $f4, $f28	
+	l.d $f4, 16($sp)	
 	la $s0, diffuse		# Memory Address of Diffuse Constants
 	# Load Diffuse Constants
 	l.d $f6, 0($s0)
@@ -476,11 +457,11 @@ clip:
 	mtc1 $t0, $f28
 	cvt.d.w $f28, $f28
 	# For each component, if it is not less than 1, move 1 to it
-	c.lt.d $f0, $f28
+	c.lt.d 0, $f0, $f28
 	movf.d $f0, $f28, 0
-	c.lt.d $f2, $f28
+	c.lt.d 0, $f2, $f28
 	movf.d $f2, $f28, 0
-	c.lt.d $f4, $f28
+	c.lt.d 0, $f4, $f28
 	movf.d $f4, $f28, 0
 	jr $ra		# Return
 	
