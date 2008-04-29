@@ -52,10 +52,13 @@
 # - 1 = plane
 # - fields point on plane, normal (12 Words total)
 
+# ********************************
+# This Scene takes 1-2 mins to run
+# ********************************
 	.data
 	.globl filename
 # The output file name:
-filename:	.asciiz "output46.bmp"
+filename:	.asciiz "outputimage.bmp"
 	.globl camera
 # The Camera/Frame
 camera:	.double 0.0,-10.0,4.0	# Camera
@@ -154,19 +157,19 @@ scene.init:
 	# Initialize objects linked list
 	la $t0, objects
 	la $t1, plane1
-	sw $t1, 0($t0)	# Make "objects" point to "sphere1"
+	sw $t1, 0($t0)	# Make "objects" point to "plane1"
 	la $t0, sphere1
-	sw $t0, 0($t1)	# Make "shere1" point to "plane2"
+	sw $t0, 0($t1)	# Make "plane1" point to "sphere12"
 	la $t1, sphere2
-	sw $t1, 0($t0)	# Make "objects" point to "sphere1"
+	sw $t1, 0($t0)	# Make "sphere1" point to "sphere2"
 	la $t0, sphere3
-	sw $t0, 0($t1)	# Make "shere1" point to "plane2"
+	sw $t0, 0($t1)	# Make "sphere2" point to "sphere3"
 	la $t1, sphere4
-	sw $t1, 0($t0)	# Make "objects" point to "sphere1"
+	sw $t1, 0($t0)	# Make "sphere3" point to "sphere4"
 	la $t0, sphere5
-	sw $t0, 0($t1)	# Make "shere1" point to "plane2"
+	sw $t0, 0($t1)	# Make "sphere4" point to "sphere5"
 	la $t1, sphere6
-	sw $t1, 0($t0)	# Make plane2 point to sphere2
+	sw $t1, 0($t0)	# Make "sphere5" point to "sphere6"
 	#la $t0, sphere7
 	#sw $t0, 0($t1)
 
@@ -179,5 +182,5 @@ scene.init:
 	#la $t1, light3
 	#sw $t1, 0($t0)
 	#la $t0, light4
-	#sw $t0, 0($t1)	# Make "light1" point to "light2"
+	#sw $t0, 0($t1)
 	jr $ra

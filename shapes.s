@@ -269,6 +269,22 @@ plane.normal:
 	l.d $f0, 64($a1)
 	l.d $f2, 72($a1)
 	l.d $f4, 80($a1)
+	# Put Ray Direction (d) in $f{6,8,10}
+	l.d $f6, 24($a0)
+	l.d $f8, 32($a0)
+	l.d $f10, 40($a0)
+	move $t0, $ra		# Save $ra
+	jal dot.v		# Calculate n.d
+	move $ra, $t0		# Restore $ra
+	la $t0, zero
+	l.d $f28, 0($t0)
+	c.lt.d $f30, $f28	# See if plane normal points in right direction
+	bc1t proper
+	# Otherwise, flip it so that the angle between ray and normal is >=90
+	neg.d $f0, $f0
+	neg.d $f2, $f2
+	neg.d $f4, $f4
+proper:
 	jr $ra
 
 # Compute the intersections of a sphere and a ray
