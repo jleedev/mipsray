@@ -1,6 +1,4 @@
 	.data
-filename:
-	.asciiz "output36.bmp"
 half:	.double 0.5
 tiny:	.double 0.00000001
 
@@ -25,8 +23,10 @@ main:
 
 	# Write the bitmap header
 	move $a0, $s4
-	li $a1, 400 # width
-	li $a2, 400 # height
+	la $t0, width
+	lw $a1, 0($t0) # width
+	la $t0, height
+	lw $a2, 0($t0) # height
 	move $s0, $a1 # save the width
 	move $s1, $a2 # and height
 
@@ -51,29 +51,6 @@ main.loop1:
 main.loop2:
 
 	# Compute the camera ray
-	# the ray's position was loaded above
-	# the ray's direction is
-	# a * right + b * up + direction
-	# a = (x/w-1/2), b = (y/h-1/2)
-	#mtc1 $s0, $f30 # width
-	#cvt.d.w $f30, $f30
-	#mtc1 $s2, $f28 # x
-	#div.d $f30, $f28, $f30
-	#lui $t0, 0x3fc0 # 0.5
-	#mtc1 $t0, $f29
-	#mtc1 $0, $f28
-	#sub.d $f30, $f30, $f28 # $f30 = a
-	# load right into <f0,f2,f4> and call scalar.v
-	#la $t0, right
-	#l.d $f0, 0($t0)
-	#l.d $f2, 8($t0)
-	#l.d $f4, 16($t0)
-	#jal scalar.v
-	# store this part temporarily
-	#s.d $f0, 32($sp)
-	#s.d $f2, 40($sp)
-	#s.d $f4, 48($sp)
-	# TODO ...
 	
 	# Move Right to $f0-$f4
 	la $t0, camera
@@ -145,7 +122,8 @@ main.loop2:
 
 	# Trace that ray to get a color
 	add $a0, $sp, $zero	# Set argument to point to ray on stack
-	addi $a1, $zero, 5	# Number of Recursive Levels
+	la $t0, recurseLevels
+	lw $a1, 0($t0)		# Number of Recursive Levels
 	jal raytrace		# Call raytrace on ray in stack
 	jal clip		# Normalize Output of raytrace
 	li $t0, 0xff
@@ -185,6 +163,7 @@ main.loop2:
 	addi $sp, $sp, 52
 	jr $ra
 
+# The Ray Tracing Algorithm
 # Inputs:
 # $a0 pointer to a ray
 # $a1 recursion levels left
@@ -228,13 +207,7 @@ cont1:
 aHit:
 	add $s1, $v1, $zero	# Store nearest object's address
 	add $a1, $v1, $zero	# Set nearest object as argument for shadow
-	
-	# TESTING ONLY: (Just load color of object hit)
-	#l.d $f0, 8($s1)
-	#l.d $f2, 16($s1)
-	#l.d $f4, 24($s1)
-	#j endTrace
-	
+		
 	jal shadow		# Calculate intensity
 	# Load Object Color
 	l.d $f6, 8($s1)

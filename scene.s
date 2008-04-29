@@ -52,17 +52,26 @@
 # - 1 = plane
 # - fields point on plane, normal (12 Words total)
 
-# a material is
-# - 3-vector for color
-# XXX will be expanded later
-
 	.data
+	.globl filename
+# The output file name:
+filename:	.asciiz "output46.bmp"
 	.globl camera
 # The Camera/Frame
-camera:	.double 0.0,-5.0,5.0	# Camera
-	.double -5.0,0.0,0.0	# Corner
-	.double 10.0,0.0,0.0	# Right
-	.double 0.0,0.0,10.0	# Up
+camera:	.double 0.0,-10.0,4.0	# Camera
+	.double -6.4,0.0,0.0	# Corner
+	.double 12.8,0.0,0.0	# Right
+	.double 0.0,0.0,8.0	# Up
+
+	.globl width
+	.globl height
+# Width and Height of Picture, in Pixels
+width:	.word 128
+height:	.word 80
+
+	.globl recurseLevels
+# The number of levels of recursion
+recurseLevels:	.word 10
 
 	.globl objects
 	.globl lights
@@ -77,38 +86,89 @@ diffuse:	.double 0.8, 0.8, 0.8	# Diffuse Coefficient
 background:	.double 0.0, 0.0, 0.0		# Background Color
 
 # Object Variables
-sphere2:	.word 0,0	# Pointer, Type
-		.double 0.5,0.0,0.5	# Color
-		.double 0.4		# Reflectivity
-		.double -4.0,7.0,4.0	# Center
-		.double 4.0,0.0,0.0	# Radius
-plane2:		.word 0,1	# Pointer, Type
+plane1:		.word 0,1	# Pointer, Type
 		.double 0.3,0.3,0.3	# Color
-		.double 0.2		# Reflectivity
+		.double 0.8		# Reflectivity
 		.double 0.0,0.0,0.0	# Point
 		.double 0.0,0.0,1.0	# Normal
-sphere1:	.word 0,0	# Pointer, Type
-		.double 0.0,1.0,1.0	# Color
+plane2:		.word 0,1	# Pointer, Type
+		.double 0.4,0.4,0.4	# Color
 		.double 0.6		# Reflectivity
-		.double 4.0,13.0,10.0	# Center
-		.double 5.5,0.0,0.0	# Radius
+		.double -5.0,0.0,0.0	# Point
+		.double -0.9701,0.2425,0.0	# Normal
+plane3:		.word 0,1	# Pointer, Type
+		.double 0.4,0.4,0.4	# Color
+		.double 0.6		# Reflectivity
+		.double 5.0,0.0,0.0	# Point
+		.double -0.9701,-0.2425,0.0	# Normal
+sphere1:	.word 0,0	# Pointer, Type
+		.double 0.551,0.0,0.578	# Color
+		.double 0.7		# Reflectivity
+		.double 0.0,6.0,2.5	# Center
+		.double 2.0,0.0,0.0	# Radius
+sphere2:	.word 0,0	# Pointer, Type
+		.double 0.0,0.773,0.0	# Color
+		.double 0.7		# Reflectivity
+		.double -8.0,12.0,8.0	# Center
+		.double 2.0,0.0,0.0	# Radius
+sphere3:	.word 0,0	# Pointer, Type
+		.double 0.777,0.0,0.0	# Color
+		.double 0.7		# Reflectivity
+		.double 8.0,12.0,8.0	# Center
+		.double 2.0,0.0,0.0	# Radius
+sphere4:	.word 0,0	# Pointer, Type
+		.double 0.043,0.430,1.0	# Color
+		.double 0.7		# Reflectivity
+		.double -6.0,8.0,3.0	# Center
+		.double 2.0,0.0,0.0	# Radius
+sphere5:	.word 0,0	# Pointer, Type
+		.double 0.0,0.805,1.0	# Color
+		.double 0.7		# Reflectivity
+		.double 6.0,8.0,3.0	# Center
+		.double 2.0,0.0,0.0	# Radius
+sphere6:	.word 0,0	# Pointer, Type
+		.double 0.0,0.0,0.777	# Color
+		.double 0.7		# Reflectivity
+		.double 0.0,8.0,7.0	# Center
+		.double 2.0,0.0,0.0	# Radius
+sphere7:	.word 0,0	# Pointer, Type
+		.double 0.7,0.7,0.7	# Color
+		.double 0.7		# Reflectivity
+		.double -20.0,23.5,-10.0	# Center
+		.double 3.5,0.0,0.0	# Radius
 light1:		.word 0,0
-		.double 10.0,10.0,15.0	# Position
+		.double -6.4,0.0,10.0	# Position
 		.double 1.0,1.0,1.0	# Color
 light2:		.word 0,0
-		.double -10.0,5.0,15.0	# Position
+		.double 6.4,0.0,10.0	# Position
+		.double 1.0,1.0,1.0	# Color
+light3:		.word 0,0
+		.double -6.4,0.0,8.0	# Position
+		.double 1.0,1.0,1.0	# Color
+light4:		.word 0,0
+		.double 6.4,0.0,8.0	# Position
 		.double 1.0,1.0,1.0	# Color
 	.text
 	.globl scene.init
 scene.init:
 	# Initialize objects linked list
 	la $t0, objects
-	la $t1, sphere1
+	la $t1, plane1
 	sw $t1, 0($t0)	# Make "objects" point to "sphere1"
-	la $t0, sphere2
+	la $t0, sphere1
 	sw $t0, 0($t1)	# Make "shere1" point to "plane2"
-	la $t1, plane2
+	la $t1, sphere2
+	sw $t1, 0($t0)	# Make "objects" point to "sphere1"
+	la $t0, sphere3
+	sw $t0, 0($t1)	# Make "shere1" point to "plane2"
+	la $t1, sphere4
+	sw $t1, 0($t0)	# Make "objects" point to "sphere1"
+	la $t0, sphere5
+	sw $t0, 0($t1)	# Make "shere1" point to "plane2"
+	la $t1, sphere6
 	sw $t1, 0($t0)	# Make plane2 point to sphere2
+	#la $t0, sphere7
+	#sw $t0, 0($t1)
 
 	# Initialize lights linked list
 	la $t0, lights
@@ -116,4 +176,8 @@ scene.init:
 	sw $t1, 0($t0)	# Make "lights" point to "light1"
 	la $t0, light2
 	sw $t0, 0($t1)	# Make "light1" point to "light2"
+	#la $t1, light3
+	#sw $t1, 0($t0)
+	#la $t0, light4
+	#sw $t0, 0($t1)	# Make "light1" point to "light2"
 	jr $ra
