@@ -1,7 +1,7 @@
 # A scene must export the following symbols
 
 # <filename>
-# - asciiz string, not including the ".bmp" extension
+# - asciiz string, including the ".bmp" extension
 # <image.width>
 # - unsigned word
 # <image.height>
